@@ -1,0 +1,22 @@
+// for syntax highlighting we use proto3 version
+syntax="proto3";
+
+// path to our current folder, where the generated files will be placed
+option go_package = "./proto";
+
+// package name for our proto file
+package binance_service;
+
+service BinanceService {
+  rpc FetchAfterOneHour (Request) returns (Response) {}
+  rpc FetchAfterFourHour (Request) returns (Response) {}
+}
+
+message Request {
+  string coin = 1;
+  string interval = 2;
+}
+
+message Response {
+ repeated string price = 1;
+}
