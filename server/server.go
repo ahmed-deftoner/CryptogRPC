@@ -39,6 +39,24 @@ func (b *binanceServer) FetchAfterOneHour(ctx context.Context, req *pb.Request) 
 	}, nil
 }
 
+func (b *binanceServer) FetchAfterFourHours(ctx context.Context, req *pb.Request) (*pb.Response, error) {
+
+	client := binance.NewClient("", "")
+	klines, err := client.NewKlinesService().Symbol("BTCUSDT").
+		Interval("4h").Do(context.Background())
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	var arr []string
+	for _, k := range klines {
+		arr = append(arr, fmt.Sprintf("%v", k.High))
+	}
+	return &pb.Response{
+		Price: arr,
+	}, nil
+}
+
 func main() {
 	//listen on the port
 	lis, err := net.Listen("tcp", port)
