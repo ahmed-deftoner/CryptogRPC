@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.6.1
-// source: proto/binance.proto
+// source: proto/Binance.proto
 
 package proto
 
@@ -22,8 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BinanceServiceClient interface {
-	FetchAfterOneHour(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
-	FetchAfterFourHour(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
+	FetchAfterOneHour(ctx context.Context, opts ...grpc.CallOption) (BinanceService_FetchAfterOneHourClient, error)
+	FetchAfterFourHour(ctx context.Context, opts ...grpc.CallOption) (BinanceService_FetchAfterFourHourClient, error)
 }
 
 type binanceServiceClient struct {
@@ -34,30 +34,74 @@ func NewBinanceServiceClient(cc grpc.ClientConnInterface) BinanceServiceClient {
 	return &binanceServiceClient{cc}
 }
 
-func (c *binanceServiceClient) FetchAfterOneHour(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := c.cc.Invoke(ctx, "/binance_service.BinanceService/FetchAfterOneHour", in, out, opts...)
+func (c *binanceServiceClient) FetchAfterOneHour(ctx context.Context, opts ...grpc.CallOption) (BinanceService_FetchAfterOneHourClient, error) {
+	stream, err := c.cc.NewStream(ctx, &BinanceService_ServiceDesc.Streams[0], "/binance_service.BinanceService/FetchAfterOneHour", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &binanceServiceFetchAfterOneHourClient{stream}
+	return x, nil
 }
 
-func (c *binanceServiceClient) FetchAfterFourHour(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := c.cc.Invoke(ctx, "/binance_service.BinanceService/FetchAfterFourHour", in, out, opts...)
+type BinanceService_FetchAfterOneHourClient interface {
+	Send(*Request) error
+	Recv() (*Response, error)
+	grpc.ClientStream
+}
+
+type binanceServiceFetchAfterOneHourClient struct {
+	grpc.ClientStream
+}
+
+func (x *binanceServiceFetchAfterOneHourClient) Send(m *Request) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *binanceServiceFetchAfterOneHourClient) Recv() (*Response, error) {
+	m := new(Response)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *binanceServiceClient) FetchAfterFourHour(ctx context.Context, opts ...grpc.CallOption) (BinanceService_FetchAfterFourHourClient, error) {
+	stream, err := c.cc.NewStream(ctx, &BinanceService_ServiceDesc.Streams[1], "/binance_service.BinanceService/FetchAfterFourHour", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &binanceServiceFetchAfterFourHourClient{stream}
+	return x, nil
+}
+
+type BinanceService_FetchAfterFourHourClient interface {
+	Send(*Request) error
+	Recv() (*Response, error)
+	grpc.ClientStream
+}
+
+type binanceServiceFetchAfterFourHourClient struct {
+	grpc.ClientStream
+}
+
+func (x *binanceServiceFetchAfterFourHourClient) Send(m *Request) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *binanceServiceFetchAfterFourHourClient) Recv() (*Response, error) {
+	m := new(Response)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // BinanceServiceServer is the server API for BinanceService service.
 // All implementations must embed UnimplementedBinanceServiceServer
 // for forward compatibility
 type BinanceServiceServer interface {
-	FetchAfterOneHour(context.Context, *Request) (*Response, error)
-	FetchAfterFourHour(context.Context, *Request) (*Response, error)
+	FetchAfterOneHour(BinanceService_FetchAfterOneHourServer) error
+	FetchAfterFourHour(BinanceService_FetchAfterFourHourServer) error
 	mustEmbedUnimplementedBinanceServiceServer()
 }
 
@@ -65,11 +109,11 @@ type BinanceServiceServer interface {
 type UnimplementedBinanceServiceServer struct {
 }
 
-func (UnimplementedBinanceServiceServer) FetchAfterOneHour(context.Context, *Request) (*Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FetchAfterOneHour not implemented")
+func (UnimplementedBinanceServiceServer) FetchAfterOneHour(BinanceService_FetchAfterOneHourServer) error {
+	return status.Errorf(codes.Unimplemented, "method FetchAfterOneHour not implemented")
 }
-func (UnimplementedBinanceServiceServer) FetchAfterFourHour(context.Context, *Request) (*Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FetchAfterFourHour not implemented")
+func (UnimplementedBinanceServiceServer) FetchAfterFourHour(BinanceService_FetchAfterFourHourServer) error {
+	return status.Errorf(codes.Unimplemented, "method FetchAfterFourHour not implemented")
 }
 func (UnimplementedBinanceServiceServer) mustEmbedUnimplementedBinanceServiceServer() {}
 
@@ -84,40 +128,56 @@ func RegisterBinanceServiceServer(s grpc.ServiceRegistrar, srv BinanceServiceSer
 	s.RegisterService(&BinanceService_ServiceDesc, srv)
 }
 
-func _BinanceService_FetchAfterOneHour_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Request)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BinanceServiceServer).FetchAfterOneHour(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/binance_service.BinanceService/FetchAfterOneHour",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BinanceServiceServer).FetchAfterOneHour(ctx, req.(*Request))
-	}
-	return interceptor(ctx, in, info, handler)
+func _BinanceService_FetchAfterOneHour_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(BinanceServiceServer).FetchAfterOneHour(&binanceServiceFetchAfterOneHourServer{stream})
 }
 
-func _BinanceService_FetchAfterFourHour_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Request)
-	if err := dec(in); err != nil {
+type BinanceService_FetchAfterOneHourServer interface {
+	Send(*Response) error
+	Recv() (*Request, error)
+	grpc.ServerStream
+}
+
+type binanceServiceFetchAfterOneHourServer struct {
+	grpc.ServerStream
+}
+
+func (x *binanceServiceFetchAfterOneHourServer) Send(m *Response) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *binanceServiceFetchAfterOneHourServer) Recv() (*Request, error) {
+	m := new(Request)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(BinanceServiceServer).FetchAfterFourHour(ctx, in)
+	return m, nil
+}
+
+func _BinanceService_FetchAfterFourHour_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(BinanceServiceServer).FetchAfterFourHour(&binanceServiceFetchAfterFourHourServer{stream})
+}
+
+type BinanceService_FetchAfterFourHourServer interface {
+	Send(*Response) error
+	Recv() (*Request, error)
+	grpc.ServerStream
+}
+
+type binanceServiceFetchAfterFourHourServer struct {
+	grpc.ServerStream
+}
+
+func (x *binanceServiceFetchAfterFourHourServer) Send(m *Response) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *binanceServiceFetchAfterFourHourServer) Recv() (*Request, error) {
+	m := new(Request)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
 	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/binance_service.BinanceService/FetchAfterFourHour",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BinanceServiceServer).FetchAfterFourHour(ctx, req.(*Request))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
 // BinanceService_ServiceDesc is the grpc.ServiceDesc for BinanceService service.
@@ -126,16 +186,20 @@ func _BinanceService_FetchAfterFourHour_Handler(srv interface{}, ctx context.Con
 var BinanceService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "binance_service.BinanceService",
 	HandlerType: (*BinanceServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "FetchAfterOneHour",
-			Handler:    _BinanceService_FetchAfterOneHour_Handler,
+			StreamName:    "FetchAfterOneHour",
+			Handler:       _BinanceService_FetchAfterOneHour_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 		{
-			MethodName: "FetchAfterFourHour",
-			Handler:    _BinanceService_FetchAfterFourHour_Handler,
+			StreamName:    "FetchAfterFourHour",
+			Handler:       _BinanceService_FetchAfterFourHour_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/binance.proto",
+	Metadata: "proto/Binance.proto",
 }

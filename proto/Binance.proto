@@ -8,15 +8,14 @@ option go_package = "./proto";
 package binance_service;
 
 service BinanceService {
-  rpc FetchAfterOneHour (Request) returns (Response) {}
-  rpc FetchAfterFourHour (Request) returns (Response) {}
+  rpc FetchAfterOneHour (stream Request) returns (stream Response) {}
+  rpc FetchAfterFourHour (stream Request) returns (stream Response) {}
 }
 
 message Request {
   string coin = 1;
-  string interval = 2;
 }
 
 message Response {
- repeated string price = 1;
+  string price = 1;
 }

@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"io"
 	"log"
 	"net"
 
@@ -11,51 +11,44 @@ import (
 	"google.golang.org/grpc"
 )
 
+// this is the struct to be created, pb is imported upstairs
+type BinanceServer struct {
+	pb.BinanceServiceServer
+}
+
+func (s *BinanceServer) FetchAfterOneHour(stream pb.BinanceService_FetchAfterOneHourServer) error {
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		log.Printf("Got request with name : %v", req.Coin)
+		client := binance.NewClient("", "")
+		klines, err := client.NewKlinesService().Symbol(req.Coin).
+			Interval("1h").Do(context.Background())
+		if err != nil {
+			return err
+		}
+
+		for _, v := range klines {
+
+			resp := pb.Response{
+				Price: v.High,
+			}
+			if err := stream.Send(&resp); err != nil {
+				log.Printf("send error %v", err)
+			}
+		}
+	}
+}
+
 // define the port
 const (
 	port = ":8080"
 )
-
-// this is the struct to be created, pb is imported upstairs
-type binanceServer struct {
-	pb.BinanceServiceServer
-}
-
-func (b *binanceServer) FetchAfterOneHour(ctx context.Context, req *pb.Request) (*pb.Response, error) {
-
-	client := binance.NewClient("", "")
-	klines, err := client.NewKlinesService().Symbol("BTCUSDT").
-		Interval("1h").Do(context.Background())
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-	var arr []string
-	for _, k := range klines {
-		arr = append(arr, fmt.Sprintf("%v", k.High))
-	}
-	return &pb.Response{
-		Price: arr,
-	}, nil
-}
-
-func (b *binanceServer) FetchAfterFourHours(ctx context.Context, req *pb.Request) (*pb.Response, error) {
-
-	client := binance.NewClient("", "")
-	klines, err := client.NewKlinesService().Symbol("BTCUSDT").
-		Interval("4h").Do(context.Background())
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-	var arr []string
-	for _, k := range klines {
-		arr = append(arr, fmt.Sprintf("%v", k.High))
-	}
-	return &pb.Response{
-		Price: arr,
-	}, nil
-}
 
 func main() {
 	//listen on the port
@@ -66,7 +59,7 @@ func main() {
 	// create a new gRPC server
 	grpcServer := grpc.NewServer()
 	// register the greet service
-	pb.RegisterBinanceServiceServer(grpcServer, &binanceServer{})
+	pb.RegisterBinanceServiceServer(grpcServer, &BinanceServer{})
 	log.Printf("Server started at %v", lis.Addr())
 	//list is the port, the grpc server needs to start there
 	if err := grpcServer.Serve(lis); err != nil {
